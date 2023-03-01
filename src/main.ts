@@ -1,6 +1,13 @@
 import './style.css'
 import * as THREE from 'three'
 
+import studio from '@theatre/studio'
+import { getProject, types } from '@theatre/core'
+
+studio.initialize()
+const project = getProject('THREE.js x Theatre.js')
+const sheet = project.sheet('Animated scene')
+
 /**
  * Camera
  */
@@ -23,15 +30,57 @@ const scene = new THREE.Scene()
 /*
  * TorusKnot
  */
-const geometry = new THREE.TorusKnotGeometry(10, 3, 300, 16)
+const geometry = new THREE.TorusKnotGeometry(2, 3, 300, 16)
 const material = new THREE.MeshStandardMaterial({color: '#f00'})
 material.color = new THREE.Color('#049ef4')
 material.roughness = 0.5
 
 const mesh = new THREE.Mesh(geometry, material)
+mesh.position.set(-2, 0, 0)
 mesh.castShadow = true
 mesh.receiveShadow = true
 scene.add(mesh)
+
+const geometry2 = new THREE.SphereGeometry (2)
+const material2 = new THREE.MeshStandardMaterial({color: '#f00'})
+material2.color = new THREE.Color('#049ef4')
+material2.roughness = 0.5
+
+const mesh2 = new THREE.Mesh(geometry2, material2)
+mesh2.position.set(2, 0, 0)
+mesh2.castShadow = true
+mesh2.receiveShadow = true
+scene.add(mesh2)
+
+const sphereObj = sheet.object('Sphere', {
+    position: types.compound({
+        x: types.number(mesh2.position.x, { range: [-2, 2] }),
+        y: types.number(mesh2.position.y, { range: [-2, 2] }),
+        z: types.number(mesh2.position.z, { range: [-2, 2] }),
+    }),
+})
+
+const torusKnotObj = sheet.object('Torus Knot', {
+    // Note that the rotation is in radians
+    // (full rotation: 2 * Math.PI)
+    rotation: types.compound({
+        x: types.number(mesh.rotation.x, { range: [-2, 2] }),
+        y: types.number(mesh.rotation.y, { range: [-2, 2] }),
+        z: types.number(mesh.rotation.z, { range: [-2, 2] }),
+    }),
+})
+
+torusKnotObj.onValuesChange((values) => {
+    const { x, y, z } = values.rotation
+
+    mesh.rotation.set(x * Math.PI, y * Math.PI, z * Math.PI)
+})
+
+sphereObj.onValuesChange((values) => {
+    const { x, y, z } = values.position
+
+    mesh.position.set(x, y, z)
+})
 
 /*
  * Lights
